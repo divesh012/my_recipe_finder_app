@@ -4,21 +4,17 @@ import { db } from "./config/db.js";
 import { favoritesTable } from "./db/schema.js";
 import { and, eq } from "drizzle-orm";
 import job from "./config/cron.js";
-import cors from "cors"; // <--- LINE 2: DO NOT MISS THIS IMPORT
+import cors from "cors";
 
 const app = express();
 const PORT = ENV.PORT || 5001;
 
-// 2. ADDED THIS: Tell the server to allow requests from your frontend
-app.use(cors({
-  origin: "http://localhost:8081",
-  methods: ["GET", "POST", "DELETE", "PUT"],
-  credentials: true
-}));
-
-if (ENV.NODE_ENV === "production") job.start();
-
+app.use(cors());
 app.use(express.json());
+
+app.get("/", (req, res) => {
+  res.send("Recipe Finder API is running 🚀");
+});
 
 app.get("/api/health", (req, res) => {
   res.status(200).json({ success: true });
@@ -34,14 +30,7 @@ app.post("/api/favorites", async (req, res) => {
 
     const newFavorite = await db
       .insert(favoritesTable)
-      .values({
-        userId,
-        recipeId,
-        title,
-        image,
-        cookTime,
-        servings,
-      })
+      .values({ userId, recipeId, title, image, cookTime, servings })
       .returning();
 
     res.status(201).json(newFavorite[0]);
@@ -62,7 +51,7 @@ app.get("/api/favorites/:userId", async (req, res) => {
 
     res.status(200).json(userFavorites);
   } catch (error) {
-    console.log("Error fetching the favorites", error);
+    console.log("Error fetching favorites", error);
     res.status(500).json({ error: "Something went wrong" });
   }
 });
@@ -74,15 +63,20 @@ app.delete("/api/favorites/:userId/:recipeId", async (req, res) => {
     await db
       .delete(favoritesTable)
       .where(
-        and(eq(favoritesTable.userId, userId), eq(favoritesTable.recipeId, parseInt(recipeId)))
+        and(
+          eq(favoritesTable.userId, userId),
+          eq(favoritesTable.recipeId, parseInt(recipeId))
+        )
       );
 
     res.status(200).json({ message: "Favorite removed successfully" });
   } catch (error) {
-    console.log("Error removing a favorite", error);
+    console.log("Error removing favorite", error);
     res.status(500).json({ error: "Something went wrong" });
   }
 });
+
+if (ENV.NODE_ENV === "production") job.start();
 
 app.listen(PORT, () => {
   console.log("Server is running on PORT:", PORT);
