@@ -17,26 +17,26 @@ const FavoritesScreen = () => {
 
   useEffect(() => {
     const loadFavorites = async () => {
-      try {
-        const response = await fetch(`${API_URL}/favorites/${user.id}`);
-        if (!response.ok) throw new Error("Failed to fetch favorites");
+  try {
+    const response = await fetch(`${API_URL}/api/favorites/${user.id}`);
 
-        const favorites = await response.json();
+    if (!response.ok) throw new Error("Failed to fetch favorites");
 
-        // transform the data to match the RecipeCard component's expected format
-        const transformedFavorites = favorites.map((favorite) => ({
-          ...favorite,
-          id: favorite.recipeId,
-        }));
+    const favorites = await response.json();
 
-        setFavoriteRecipes(transformedFavorites);
-      } catch (error) {
-        console.log("Error loading favorites", error);
-        Alert.alert("Error", "Failed to load favorites");
-      } finally {
-        setLoading(false);
-      }
-    };
+    const transformedFavorites = favorites.map((favorite) => ({
+      ...favorite,
+      id: favorite.recipeId,
+    }));
+
+    setFavoriteRecipes(transformedFavorites);
+  } catch (error) {
+    console.log("Error loading favorites", error);
+    Alert.alert("Error", "Failed to load favorites");
+  } finally {
+    setLoading(false);
+  }
+};
 
     loadFavorites();
   }, [user.id]);
